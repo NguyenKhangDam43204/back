@@ -1,0 +1,126 @@
+services:
+  # 1. Message Broker (RabbitMQ)
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq_tmdt
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: tmdt
+      RABBITMQ_DEFAULT_PASS: tmdt2026
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 2. User Microservice
+  user-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - APP_NAME=user-service # Báo cho Dockerfile biết cần build user-service
+    container_name: user_service_tmdt
+    depends_on:
+      rabbitmq:
+        condition: service_healthy # Chỉ chạy khi RabbitMQ đã khởi động xong
+
+  # 3. Product Microservice
+  product-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - APP_NAME=product-service
+    container_name: product_service_tmdt
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  # 4. Order Microservice
+  order-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - APP_NAME=order-service
+    container_name: order_service_tmdt
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  # 5. Payment Microservice
+  payment-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - APP_NAME=payment-service
+    container_name: payment_service_tmdt
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  # 6. Promotion Microservice
+  promotion-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - APP_NAME=promotion-service
+    container_name: promotion_service_tmdt
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  # 7. Review Microservice
+  review-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - APP_NAME=review-service
+    container_name: review_service_tmdt
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  # 8. Config Microservice
+  config-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - APP_NAME=config-service
+    container_name: config_service_tmdt
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  # 9. Notification Microservice
+  notification-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - APP_NAME=notification-service
+    container_name: notification_service_tmdt
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  # 10. API Gateway (App tmdt)
+  api-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - APP_NAME=tmdt # Báo cho Dockerfile biết cần build api-gateway
+    container_name: api_gateway_tmdt
+    ports:
+      - "3000:3000" # Mở port 3000 để bạn gọi từ Postman
+    depends_on:
+      rabbitmq:
+        condition: service_healthy

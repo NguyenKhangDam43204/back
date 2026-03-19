@@ -1,0 +1,59 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model Role {
+  id        String   @id @default(uuid()) @db.Char(36)
+  name      String   @db.VarChar(255)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  userRoles UserRole[]
+
+  @@map("ROLES")
+}
+
+model User {
+  id           String   @id @default(uuid()) @db.Char(36)
+  userName     String   @map("user_name") @db.VarChar(255)
+  hashPassword String   @map("hash_password") @db.VarChar(255)
+  email        String   @unique @db.VarChar(255)
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
+
+  detail    UserDetail?
+  userRoles UserRole[]
+
+  @@index([isActive], map: "idx_users_active")
+  @@map("USERS")
+}
+
+model UserRole {
+  userId String @map("user_id") @db.Char(36)
+  roleId String @map("role_id") @db.Char(36)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@map("USER_ROLES")
+}
+
+model UserDetail {
+  id          String   @id @default(uuid()) @db.Char(36)
+  userId      String   @unique @map("user_id") @db.Char(36)
+  name        String?  @db.VarChar(255)
+  avatarUrl   String?  @map("avatar_url") @db.VarChar(255)
+  address     String?  @db.VarChar(255)
+  phoneNumber String?  @map("phone_number") @db.VarChar(20)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("USER_DETAILS")
+}

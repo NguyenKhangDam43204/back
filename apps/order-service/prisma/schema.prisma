@@ -1,0 +1,53 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "mysql"
+}
+
+enum OrderStatus {
+    pending
+    processing
+    shipped
+    completed
+    cancelled
+}
+
+model Order {
+    id              String      @id @default(uuid()) @db.Char(36)
+    userId          String      @map("user_id") @db.Char(36)
+    promotionId     String?     @map("promotion_id") @db.Char(36)
+    subtotalPrice   Decimal     @map("subtotal_price") @db.Decimal(18, 2)
+    discountAmount  Decimal     @default(0) @map("discount_amount") @db.Decimal(18, 2)
+    totalPrice      Decimal     @map("total_price") @db.Decimal(18, 2)
+    totalProduct    Int?        @map("total_product")
+    status          OrderStatus @default(pending)
+    shippingName    String      @map("shipping_name") @db.VarChar(255)
+    shippingPhone   String      @map("shipping_phone") @db.VarChar(20)
+    shippingAddress String      @map("shipping_address") @db.VarChar(500)
+    note            String?     @db.VarChar(500)
+    createdAt       DateTime    @default(now()) @map("created_at")
+    updatedAt       DateTime    @default(now()) @updatedAt @map("updated_at")
+
+    details OrderDetail[]
+
+    @@index([userId], map: "idx_orders_user")
+    @@index([status], map: "idx_orders_status")
+    @@index([promotionId], map: "idx_orders_promotion")
+    @@map("ORDERS")
+}
+
+model OrderDetail {
+    id               String  @id @default(uuid()) @db.Char(36)
+    orderId          String  @map("order_id") @db.Char(36)
+    productVariantId String  @map("product_variant_id") @db.Char(36)
+    quantity         Int
+    importPrice      Decimal @map("import_price") @db.Decimal(18, 2)
+    price            Decimal @db.Decimal(18, 2)
+
+    order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+    @@unique([orderId, productVariantId], map: "uq_order_details")
+    @@map("ORDER_DETAILS")
+}

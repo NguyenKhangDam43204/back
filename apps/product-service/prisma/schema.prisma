@@ -1,0 +1,101 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "mysql"
+}
+
+model Category {
+    id        String   @id @default(uuid()) @db.Char(36)
+    name      String   @db.VarChar(255)
+    slug      String   @unique @db.VarChar(255)
+    parentId  String?  @map("parent_id") @db.Char(36)
+    sortOrder Int      @default(0) @map("sort_order")
+    isActive  Boolean  @default(true) @map("is_active")
+    createdAt DateTime @default(now()) @map("created_at")
+
+    parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id])
+    children Category[] @relation("CategoryTree")
+    products Product[]
+
+    @@map("CATEGORIES")
+}
+
+model ProductModel {
+    id          String    @id @default(uuid()) @db.Char(36)
+    modelName   String    @map("model_name") @db.VarChar(255)
+    modelNumber String?   @map("model_number") @db.VarChar(255)
+    brand       String    @db.VarChar(255)
+    cpu         String?   @db.VarChar(255)
+    screenSize  Decimal?  @map("screen_size") @db.Decimal(5, 2)
+    operaSystem String?   @map("opera_system") @db.VarChar(255)
+    isActive    Boolean   @default(true) @map("is_active")
+    deletedAt   DateTime? @map("deleted_at")
+    createdAt   DateTime  @default(now()) @map("created_at")
+
+    products Product[]
+
+    @@map("MODEL")
+}
+
+model Product {
+    id          String    @id @default(uuid()) @db.Char(36)
+    name        String    @db.VarChar(255)
+    modelId     String?   @map("model_id") @db.Char(36)
+    categoryId  String    @map("category_id") @db.Char(36)
+    imgUrl      String?   @map("img_url") @db.VarChar(500)
+    description String?   @db.Text
+    isActive    Boolean   @default(true) @map("is_active")
+    deletedAt   DateTime? @map("deleted_at")
+    createdAt   DateTime  @default(now()) @map("created_at")
+    updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at")
+
+    model    ProductModel?    @relation(fields: [modelId], references: [id])
+    category Category         @relation(fields: [categoryId], references: [id])
+    variants ProductVariant[]
+
+    @@index([categoryId], map: "idx_products_category")
+    @@index([isActive, deletedAt], map: "idx_products_active")
+    @@map("PRODUCTS")
+}
+
+model ProductVariant {
+    id            String    @id @default(uuid()) @db.Char(36)
+    productId     String    @map("product_id") @db.Char(36)
+    color         String?   @db.VarChar(100)
+    ram           Int?
+    storage       Int?
+    importPrice   Decimal   @map("import_price") @db.Decimal(18, 2)
+    originalPrice Decimal?  @map("original_price") @db.Decimal(18, 2)
+    price         Decimal   @db.Decimal(18, 2)
+    stockQuantity Int       @default(0) @map("stock_quantity")
+    isActive      Boolean   @default(true) @map("is_active")
+    deletedAt     DateTime? @map("deleted_at")
+    createdAt     DateTime  @default(now()) @map("created_at")
+
+    product        Product        @relation(fields: [productId], references: [id])
+    priceHistories PriceHistory[]
+
+    @@index([productId], map: "idx_variants_product")
+    @@map("PRODUCT_VARIANTS")
+}
+
+model PriceHistory {
+    id               String   @id @default(uuid()) @db.Char(36)
+    productVariantId String   @map("product_variant_id") @db.Char(36)
+    changedBy        String   @map("changed_by") @db.Char(36)
+    oldImportPrice   Decimal? @map("old_import_price") @db.Decimal(18, 2)
+    newImportPrice   Decimal? @map("new_import_price") @db.Decimal(18, 2)
+    oldOriginalPrice Decimal? @map("old_original_price") @db.Decimal(18, 2)
+    newOriginalPrice Decimal? @map("new_original_price") @db.Decimal(18, 2)
+    oldPrice         Decimal? @map("old_price") @db.Decimal(18, 2)
+    newPrice         Decimal? @map("new_price") @db.Decimal(18, 2)
+    reason           String?  @db.VarChar(500)
+    changedAt        DateTime @default(now()) @map("changed_at")
+
+    productVariant ProductVariant @relation(fields: [productVariantId], references: [id])
+
+    @@index([productVariantId, changedAt], map: "idx_price_history")
+    @@map("PRICE_HISTORIES")
+}
