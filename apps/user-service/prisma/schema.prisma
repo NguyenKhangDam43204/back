@@ -1,3 +1,8 @@
+// ============================================================
+// User Service — db_users
+// prisma/schema.prisma
+// ============================================================
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -6,6 +11,24 @@ datasource db {
   provider = "mysql"
 }
 
+// ============================================================
+// ENUMS
+// ============================================================
+enum Gender {
+  male
+  female
+  other
+}
+
+enum DeviceType {
+  android
+  ios
+  web
+}
+
+// ============================================================
+// ROLES
+// ============================================================
 model Role {
   id        String   @id @default(uuid()) @db.Char(36)
   name      String   @db.VarChar(255)
@@ -16,22 +39,32 @@ model Role {
   @@map("ROLES")
 }
 
+// ============================================================
+// USERS
+// ============================================================
 model User {
   id           String   @id @default(uuid()) @db.Char(36)
   userName     String   @map("user_name") @db.VarChar(255)
   hashPassword String   @map("hash_password") @db.VarChar(255)
   email        String   @unique @db.VarChar(255)
+  phoneNumber  String?  @unique @map("phone_number") @db.VarChar(20)
   isActive     Boolean  @default(true) @map("is_active")
   createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
-  detail    UserDetail?
-  userRoles UserRole[]
+  userRoles  UserRole[]
+  userDetail UserDetail?
+  addresses  UserAddress[]
+  fcmTokens  FcmToken[]
 
-  @@index([isActive], map: "idx_users_active")
+  @@index([email])
+  @@index([isActive])
   @@map("USERS")
 }
 
+// ============================================================
+// USER_ROLES (junction)
+// ============================================================
 model UserRole {
   userId String @map("user_id") @db.Char(36)
   roleId String @map("role_id") @db.Char(36)
@@ -43,17 +76,61 @@ model UserRole {
   @@map("USER_ROLES")
 }
 
+// ============================================================
+// USER_DETAILS
+// ============================================================
 model UserDetail {
-  id          String   @id @default(uuid()) @db.Char(36)
-  userId      String   @unique @map("user_id") @db.Char(36)
-  name        String?  @db.VarChar(255)
-  avatarUrl   String?  @map("avatar_url") @db.VarChar(255)
-  address     String?  @db.VarChar(255)
-  phoneNumber String?  @map("phone_number") @db.VarChar(20)
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+  id          String    @id @default(uuid()) @db.Char(36)
+  userId      String    @unique @map("user_id") @db.Char(36)
+  fullName    String?   @map("full_name") @db.VarChar(255)
+  avatarUrl   String?   @map("avatar_url") @db.VarChar(500)
+  dateOfBirth DateTime? @map("date_of_birth") @db.Date
+  gender      Gender?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("USER_DETAILS")
+}
+
+// ============================================================
+// USER_ADDRESSES
+// Hỗ trợ address book: nhiều địa chỉ / 1 user
+// ============================================================
+model UserAddress {
+  id          String   @id @default(uuid()) @db.Char(36)
+  userId      String   @map("user_id") @db.Char(36)
+  label       String?  @db.VarChar(100)
+  fullName    String   @map("full_name") @db.VarChar(255)
+  phoneNumber String   @map("phone_number") @db.VarChar(20)
+  province    String   @db.VarChar(255)
+  district    String   @db.VarChar(255)
+  ward        String   @db.VarChar(255)
+  street      String   @db.VarChar(500)
+  isDefault   Boolean  @default(false) @map("is_default")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isDefault])
+  @@map("USER_ADDRESSES")
+}
+
+// ============================================================
+// FCM_TOKENS
+// Firebase Cloud Messaging token theo thiết bị
+// ============================================================
+model FcmToken {
+  id         String     @id @default(uuid()) @db.Char(36)
+  userId     String     @map("user_id") @db.Char(36)
+  token      String     @unique @db.VarChar(500)
+  deviceType DeviceType @map("device_type")
+  createdAt  DateTime   @default(now()) @map("created_at")
+  updatedAt  DateTime   @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("FCM_TOKENS")
 }

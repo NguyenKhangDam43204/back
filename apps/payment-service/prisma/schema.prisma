@@ -1,3 +1,8 @@
+// ============================================================
+// Payment Service — db_payments
+// prisma/schema.prisma
+// ============================================================
+
 generator client {
     provider = "prisma-client-js"
 }
@@ -6,11 +11,14 @@ datasource db {
     provider = "mysql"
 }
 
+// ============================================================
+// ENUMS
+// ============================================================
 enum PaymentMethod {
     cod
     vnpay
     momo
-    credit_card
+    bank_transfer
 }
 
 enum PaymentStatus {
@@ -20,6 +28,10 @@ enum PaymentStatus {
     refunded
 }
 
+// ============================================================
+// PAYMENTS
+// orderId: [REF: db_orders → Order Service]
+// ============================================================
 model Payment {
     id               String        @id @default(uuid()) @db.Char(36)
     orderId          String        @map("order_id") @db.Char(36)
@@ -28,10 +40,11 @@ model Payment {
     status           PaymentStatus @default(pending)
     transactionCode  String?       @map("transaction_code") @db.VarChar(255)
     providerResponse String?       @map("provider_response") @db.Text
+    paidAt           DateTime?     @map("paid_at")
     createdAt        DateTime      @default(now()) @map("created_at")
-    updatedAt        DateTime      @default(now()) @updatedAt @map("updated_at")
+    updatedAt        DateTime      @updatedAt @map("updated_at")
 
-    @@index([orderId], map: "idx_payments_order")
-    @@index([status], map: "idx_payments_status")
+    @@index([orderId])
+    @@index([status])
     @@map("PAYMENTS")
 }

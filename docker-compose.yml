@@ -111,7 +111,55 @@ services:
       rabbitmq:
         condition: service_healthy
 
-  # 10. API Gateway (App tmdt)
+  # 10. Inventory Microservice
+  inventory-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - APP_NAME=inventory-service
+    container_name: inventory_service_tmdt
+    ports:
+      - "3004:3004"
+    environment:
+      - INVENTORY_SERVICE_PORT=3004
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  # 11. Cart Microservice
+  cart-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - APP_NAME=cart-service
+    container_name: cart_service_tmdt
+    ports:
+      - "3005:3005"
+    environment:
+      - CART_SERVICE_PORT=3005
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  # 12. Installment Microservice
+  installment-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - APP_NAME=installment-service
+    container_name: installment_service_tmdt
+    ports:
+      - "3006:3006"
+    environment:
+      - INSTALLMENT_SERVICE_PORT=3006
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  # 13. API Gateway (App tmdt)
   api-gateway:
     build:
       context: .
