@@ -1,8 +1,8 @@
 services:
-  # 1. Message Broker (RabbitMQ)
   rabbitmq:
-    image: rabbitmq:3-management
+    image: rabbitmq:3.13-management
     container_name: rabbitmq_tmdt
+    restart: unless-stopped
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -15,160 +15,104 @@ services:
       timeout: 5s
       retries: 5
 
-  # 2. User Microservice
-  user-service:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        - APP_NAME=user-service # Báo cho Dockerfile biết cần build user-service
-    container_name: user_service_tmdt
-    depends_on:
-      rabbitmq:
-        condition: service_healthy # Chỉ chạy khi RabbitMQ đã khởi động xong
-
-  # 3. Product Microservice
-  product-service:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        - APP_NAME=product-service
-    container_name: product_service_tmdt
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-
-  # 4. Order Microservice
-  order-service:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        - APP_NAME=order-service
-    container_name: order_service_tmdt
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-
-  # 5. Payment Microservice
-  payment-service:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        - APP_NAME=payment-service
-    container_name: payment_service_tmdt
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-
-  # 6. Promotion Microservice
-  promotion-service:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        - APP_NAME=promotion-service
-    container_name: promotion_service_tmdt
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-
-  # 7. Review Microservice
-  review-service:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        - APP_NAME=review-service
-    container_name: review_service_tmdt
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-
-  # 8. Config Microservice
-  config-service:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        - APP_NAME=config-service
-    container_name: config_service_tmdt
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-
-  # 9. Notification Microservice
-  notification-service:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        - APP_NAME=notification-service
-    container_name: notification_service_tmdt
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-
-  # 10. Inventory Microservice
-  inventory-service:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        - APP_NAME=inventory-service
-    container_name: inventory_service_tmdt
+  # ✅ MySQL (1 container)
+  mysql:
+    image: mysql:8
+    container_name: mysql_tmdt
+    restart: unless-stopped
     ports:
-      - "3004:3004"
+      - "3306:3306"
     environment:
-      - INVENTORY_SERVICE_PORT=3004
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
+      MYSQL_ROOT_PASSWORD: password
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  # 11. Cart Microservice
-  cart-service:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        - APP_NAME=cart-service
-    container_name: cart_service_tmdt
-    ports:
-      - "3005:3005"
-    environment:
-      - CART_SERVICE_PORT=3005
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-
-  # 12. Installment Microservice
-  installment-service:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        - APP_NAME=installment-service
-    container_name: installment_service_tmdt
-    ports:
-      - "3006:3006"
-    environment:
-      - INSTALLMENT_SERVICE_PORT=3006
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-
-  # 13. API Gateway (App tmdt)
+  # API Gateway
   api-gateway:
     build:
       context: .
       dockerfile: Dockerfile
       args:
-        - APP_NAME=tmdt # Báo cho Dockerfile biết cần build api-gateway
+        APP_NAME: tmdt
+        HAS_PRISMA: "false"
     container_name: api_gateway_tmdt
+    restart: unless-stopped
     ports:
-      - "3000:3000" # Mở port 3000 để bạn gọi từ Postman
+      - "3000:3000"
     depends_on:
       rabbitmq:
         condition: service_healthy
+    environment:
+      NODE_ENV: production
+      RABBITMQ_URL: amqp://tmdt:tmdt2026@rabbitmq:5672
+
+  # User service
+  user-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APP_NAME: user-service
+        HAS_PRISMA: "true"
+    container_name: user_service_tmdt
+    restart: unless-stopped
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      RABBITMQ_URL: amqp://tmdt:tmdt2026@rabbitmq:5672
+      DATABASE_URL: mysql://root:password@mysql:3306/db_users
+
+  # Review service
+  review-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APP_NAME: review-service
+        HAS_PRISMA: "true"
+    container_name: review_service_tmdt
+    restart: unless-stopped
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      RABBITMQ_URL: amqp://tmdt:tmdt2026@rabbitmq:5672
+      DATABASE_URL: mysql://root:password@mysql:3306/db_reviews
+
+  # Inventory service
+  inventory-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APP_NAME: inventory-service
+        HAS_PRISMA: "false"
+    container_name: inventory_service_tmdt
+    restart: unless-stopped
+    ports:
+      - "3004:3004"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      INVENTORY_SERVICE_PORT: 3004
+      RABBITMQ_URL: amqp://tmdt:tmdt2026@rabbitmq:5672
+      DATABASE_URL: mysql://root:password@mysql:3306/db_inventory
+
+
+volumes:
+  mysql_data:

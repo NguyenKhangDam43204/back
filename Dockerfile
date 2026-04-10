@@ -1,26 +1,47 @@
-# Bước 1: Môi trường build
-FROM node:20-alpine AS builder
+# syntax=docker/dockerfile:1.7
+
+ARG NODE_VERSION=22-alpine
+
+FROM node:${NODE_VERSION} AS base
 WORKDIR /app
+RUN apk add --no-cache libc6-compat openssl
 
-# Copy package và cài đặt dependencies
+FROM base AS deps
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 
-# Copy toàn bộ source code
-COPY . .
-
-# Khai báo biến APP_NAME để biết cần build app nào (tmdt hay auth-service)
+FROM deps AS build
 ARG APP_NAME
+ARG HAS_PRISMA=false
+ENV APP_NAME=${APP_NAME}
+ENV HAS_PRISMA=${HAS_PRISMA}
+
+COPY nest-cli.json tsconfig*.json ./
+COPY apps ./apps
+
 RUN npm run build ${APP_NAME}
 
-# Bước 2: Môi trường chạy (Production)
-FROM node:20-alpine
-WORKDIR /app
+# Chuẩn bị Prisma artifacts cho service có DB (optional)
+RUN if [ "${HAS_PRISMA}" = "true" ] && [ -f "apps/${APP_NAME}/prisma/schema.prisma" ]; then \
+    npx prisma generate --schema="apps/${APP_NAME}/prisma/schema.prisma"; \
+    else \
+    echo "Skip Prisma generate for ${APP_NAME}"; \
+    fi
+
+FROM base AS runtime
 ARG APP_NAME
+ARG HAS_PRISMA=false
+ENV NODE_ENV=production
+ENV APP_NAME=${APP_NAME}
+ENV HAS_PRISMA=${HAS_PRISMA}
 
-# Chỉ copy node_modules và thư mục dist (đã build) của app tương ứng
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/dist/apps/${APP_NAME} ./dist
+COPY package*.json ./
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=build /app/dist/apps/${APP_NAME} ./dist
 
-# Lệnh chạy app
-CMD ["node", "dist/main.js"]
+# Prisma runtime files chỉ cần cho service có DB
+COPY --from=build /app/apps/${APP_NAME}/prisma ./apps/${APP_NAME}/prisma
+
+EXPOSE 3000
+
+CMD ["sh", "-c", "node dist/main.js"]

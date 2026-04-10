@@ -1,13 +1,47 @@
 import { Controller } from '@nestjs/common';
-import { MessagePattern } from '@nestjs/microservices';
+import { MessagePattern, Payload } from '@nestjs/microservices';
+import { UserServiceService } from './user-service.service';
 
 @Controller()
 export class UserServiceController {
-  // Lắng nghe các tin nhắn có lệnh (cmd) là 'login'
-  @MessagePattern({ cmd: 'login' })
-  handleLogin(data: any) {
-    console.log('User Service nhận được data:', data);
-    // Xử lý logic DB ở đây...
-    return { success: true, message: 'Đăng nhập thành công', user: data.username };
+  constructor(private readonly userService: UserServiceService) {}
+
+  @MessagePattern({ cmd: 'auth.register' })
+  register(
+    @Payload()
+    data: {
+      email: string;
+      password: string;
+      userName: string;
+    },
+  ) {
+    return this.userService.register(data);
+  }
+
+  @MessagePattern({ cmd: 'auth.verify-register' })
+  verifyRegister(@Payload() data: { email: string; otp: string }) {
+    return this.userService.verifyRegister(data);
+  }
+
+  @MessagePattern({ cmd: 'auth.login' })
+  login(@Payload() data: { email: string; password: string }) {
+    return this.userService.login(data);
+  }
+
+  @MessagePattern({ cmd: 'auth.forgot-password' })
+  forgotPassword(@Payload() data: { email: string }) {
+    return this.userService.forgotPassword(data);
+  }
+
+  @MessagePattern({ cmd: 'auth.reset-password' })
+  resetPassword(
+    @Payload()
+    data: {
+      email: string;
+      otp: string;
+      newPassword: string;
+    },
+  ) {
+    return this.userService.resetPassword(data);
   }
 }

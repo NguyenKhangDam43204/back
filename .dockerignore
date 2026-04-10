@@ -1,0 +1,61 @@
+# Dependencies
+node_modules
+**/node_modules
+
+# Build outputs
+dist
+build
+**/dist
+**/build
+coverage
+**/coverage
+.nyc_output
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# IDE / OS
+.vscode
+.idea
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+
+# Tests
+**/*.spec.ts
+**/*.test.ts
+**/test
+
+# Docs / SQL / misc local artifacts
+*.md
+*.sql
+*.sqlite
+*.sqlite3
+
+# Keep required project files
+!package.json
+!package-lock.json
+!nest-cli.json
+!tsconfig.json
+!tsconfig.build.json
+!apps/**
