@@ -1,24 +1,49 @@
-import { NestFactory } from '@nestjs/core';
-import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+import { NestFactory, Reflector } from '@nestjs/core';
+import { ValidationPipe } from '@nestjs/common';
+import helmet from 'helmet';
 import { UserServiceModule } from './user-service.module';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 
 async function bootstrap() {
-  const app = await NestFactory.createMicroservice<MicroserviceOptions>(
-    UserServiceModule,
-    {
-      transport: Transport.RMQ,
-      options: {
-        urls: [
-          process.env.RABBITMQ_URL ?? 'amqp://tmdt:tmdt2026@rabbitmq:5672',
-        ],
-        queue: 'user_queue',
-        queueOptions: {
-          durable: false,
-        },
-      },
-    },
+  const app = await NestFactory.create(UserServiceModule);
+
+  // Security headers
+  app.use(helmet());
+
+  // CORS
+  app.enableCors({
+    origin: process.env.CORS_ORIGIN ?? '*',
+    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'PUT'],
+    credentials: true,
+  });
+
+  // Global prefix
+  app.setGlobalPrefix('api/v1');
+
+  // Global validation pipe
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
   );
-  await app.listen();
-  console.log('User Microservice is listening via RabbitMQ...');
+
+  // Global exception filter
+  app.useGlobalFilters(new HttpExceptionFilter());
+
+  // Global response interceptor
+  app.useGlobalInterceptors(new ResponseInterceptor());
+
+  const port = process.env.PORT ?? 3001;
+  await app.listen(port);
+
+  console.log(`✅ User Service running on port ${port}`);
+  console.log(`   Environment: ${process.env.NODE_ENV ?? 'development'}`);
 }
-void bootstrap();
+
+bootstrap().catch((err) => {
+  console.error('❌ Failed to start User Service:', err);
+  process.exit(1);
+});
