@@ -5,10 +5,12 @@
 
 generator client {
     provider = "prisma-client-js"
+    previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
     provider = "mysql"
+ 
 }
 
 // ============================================================
@@ -60,7 +62,7 @@ model Product {
     name        String    @db.VarChar(255)
     modelId     String?   @map("model_id") @db.Char(36)
     categoryId  String    @map("category_id") @db.Char(36)
-    thumbnail   String?   @db.VarChar(500)
+    imgUrl      String?   @map("img_url") @db.VarChar(500)
     description String?   @db.Text
     isActive    Boolean   @default(true) @map("is_active")
     deletedAt   DateTime? @map("deleted_at")
@@ -102,13 +104,14 @@ model ProductImage {
 model ProductVariant {
     id            String    @id @default(uuid()) @db.Char(36)
     productId     String    @map("product_id") @db.Char(36)
-    sku           String    @unique @db.VarChar(100)
+
     color         String?   @db.VarChar(100)
     ram           Int?
     storage       Int?
     importPrice   Decimal   @map("import_price") @db.Decimal(18, 2)
     originalPrice Decimal?  @map("original_price") @db.Decimal(18, 2)
     price         Decimal   @db.Decimal(18, 2)
+    stockQuantity Int       @default(0) @map("stock_quantity")
     isActive      Boolean   @default(true) @map("is_active")
     deletedAt     DateTime? @map("deleted_at")
     createdAt     DateTime  @default(now()) @map("created_at")
