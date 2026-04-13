@@ -1,99 +1,52 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { ClientsModule, Transport } from '@nestjs/microservices';
+import { ClientsModule, Transport, ClientProviderOptions } from '@nestjs/microservices';
+
+const RABBITMQ_URL =
+  process.env.RABBITMQ_URL ?? 'amqp://tmdt:tmdt2026@rabbitmq:5672';
+
+// ✅ Fix: Explicit type RmqOptions base
+const RMQ_BASE_OPTIONS = {
+  urls: [RABBITMQ_URL],
+  persistent: true,
+  queueOptions: {
+    durable: true,
+    arguments: {
+      'x-message-ttl': 3600000,
+      'x-max-length': 1000,
+    },
+  },
+  socketOptions: {
+    heartbeatInterval: 60000,
+    reconnectTimeInSeconds: 5,
+  },
+};
+
+// ✅ Fix: Helper function trả về đúng type
+function createRmqClient(name: string, queue: string): ClientProviderOptions {
+  return {
+    name,
+    transport: Transport.RMQ,  // ✅ Transport.RMQ thay vì Transport
+    options: {
+      ...RMQ_BASE_OPTIONS,
+      queue,
+    },
+  };
+}
 
 @Module({
   imports: [
     ClientsModule.register([
-      {
-        name: 'USER_SERVICE',
-        transport: Transport.RMQ,
-        options: {
-          urls: ['amqp://tmdt:tmdt2026@rabbitmq:5672'],
-          queue: 'user_queue',
-          queueOptions: {
-            durable: false,
-          },
-        },
-      },
-      {
-        name: 'PRODUCT_SERVICE',
-        transport: Transport.RMQ,
-        options: {
-          urls: ['amqp://tmdt:tmdt2026@rabbitmq:5672'],
-          queue: 'product_queue',
-          queueOptions: {
-            durable: false,
-          },
-        },
-      },
-      {
-        name: 'ORDER_SERVICE',
-        transport: Transport.RMQ,
-        options: {
-          urls: ['amqp://tmdt:tmdt2026@rabbitmq:5672'],
-          queue: 'order_queue',
-          queueOptions: {
-            durable: false,
-          },
-        },
-      },
-      {
-        name: 'PAYMENT_SERVICE',
-        transport: Transport.RMQ,
-        options: {
-          urls: ['amqp://tmdt:tmdt2026@rabbitmq:5672'],
-          queue: 'payment_queue',
-          queueOptions: {
-            durable: false,
-          },
-        },
-      },
-      {
-        name: 'PROMOTION_SERVICE',
-        transport: Transport.RMQ,
-        options: {
-          urls: ['amqp://tmdt:tmdt2026@rabbitmq:5672'],
-          queue: 'promotion_queue',
-          queueOptions: {
-            durable: false,
-          },
-        },
-      },
-      {
-        name: 'REVIEW_SERVICE',
-        transport: Transport.RMQ,
-        options: {
-          urls: ['amqp://tmdt:tmdt2026@rabbitmq:5672'],
-          queue: 'review_queue',
-          queueOptions: {
-            durable: false,
-          },
-        },
-      },
-      {
-        name: 'CONFIG_SERVICE',
-        transport: Transport.RMQ,
-        options: {
-          urls: ['amqp://tmdt:tmdt2026@rabbitmq:5672'],
-          queue: 'config_queue',
-          queueOptions: {
-            durable: false,
-          },
-        },
-      },
-      {
-        name: 'NOTIFICATION_SERVICE',
-        transport: Transport.RMQ,
-        options: {
-          urls: ['amqp://tmdt:tmdt2026@rabbitmq:5672'],
-          queue: 'notification_queue',
-          queueOptions: {
-            durable: false,
-          },
-        },
-      },
+      createRmqClient('USER_SERVICE',         process.env.USER_QUEUE         ?? 'user_queue'),
+      createRmqClient('PRODUCT_SERVICE',      process.env.PRODUCT_QUEUE      ?? 'product_queue'),
+      createRmqClient('ORDER_SERVICE',        process.env.ORDER_QUEUE        ?? 'order_queue'),
+      createRmqClient('PAYMENT_SERVICE',      process.env.PAYMENT_QUEUE      ?? 'payment_queue'),
+      createRmqClient('PROMOTION_SERVICE',    process.env.PROMOTION_QUEUE    ?? 'promotion_queue'),
+      createRmqClient('REVIEW_SERVICE',       process.env.REVIEW_QUEUE       ?? 'review_queue'),
+      createRmqClient('CONFIG_SERVICE',       process.env.CONFIG_QUEUE       ?? 'config_queue'),
+      createRmqClient('NOTIFICATION_SERVICE', process.env.NOTIFICATION_QUEUE ?? 'notification_queue'),
+      createRmqClient('INVENTORY_SERVICE',    process.env.INVENTORY_QUEUE    ?? 'inventory_queue'),
     ]),
   ],
   controllers: [AppController],

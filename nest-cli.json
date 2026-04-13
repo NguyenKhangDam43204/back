@@ -1,5 +1,5 @@
 {
-  "$schema": "https://json.schemastore.org/nest-cli",
+ "$schema": "https://json.schemastore.org/nest-cli",
   "collection": "@nestjs/schematics",
   "sourceRoot": "apps/tmdt/src",
   "compilerOptions": {
@@ -16,7 +16,9 @@
       "entryFile": "main",
       "sourceRoot": "apps/user-service/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/user-service/tsconfig.app.json"
+        "tsConfigPath": "apps/user-service/tsconfig.app.json",
+        "webpack": true,
+        "webpackConfigPath": "apps/user-service/webpack.config.js"
       }
     },
     "product-service": {
@@ -61,7 +63,9 @@
       "entryFile": "main",
       "sourceRoot": "apps/review-service/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/review-service/tsconfig.app.json"
+        "tsConfigPath": "apps/review-service/tsconfig.app.json",
+        "webpack": true,
+        "webpackConfigPath": "apps/review-service/webpack.config.js"
       }
     },
     "config-service": {
@@ -82,13 +86,15 @@
         "tsConfigPath": "apps/notification-service/tsconfig.app.json"
       }
     },
-    "inventory-service": {
+     "inventory-service": {
       "type": "application",
       "root": "apps/inventory-service",
       "entryFile": "main",
       "sourceRoot": "apps/inventory-service/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/inventory-service/tsconfig.app.json"
+        "tsConfigPath": "apps/inventory-service/tsconfig.app.json",
+        "webpack": true,
+        "webpackConfigPath": "apps/inventory-service/webpack.config.js"
       }
     },
     "cart-service": {
