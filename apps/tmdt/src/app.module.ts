@@ -12,10 +12,6 @@ const RMQ_BASE_OPTIONS = {
   persistent: true,
   queueOptions: {
     durable: true,
-    arguments: {
-      'x-message-ttl': 3600000,
-      'x-max-length': 1000,
-    },
   },
   socketOptions: {
     heartbeatInterval: 60000,

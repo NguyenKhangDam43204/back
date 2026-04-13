@@ -1,62 +1,57 @@
-// ============================================================
-// Inventory Service — db_inventory
-// prisma/schema.prisma
-// ============================================================
-
 generator client {
     provider = "prisma-client-js"
+    output   = "../../../node_modules/@prisma/inventory-client"
 }
 
 datasource db {
     provider = "mysql"
-    url      = env("DATABASE_URL")
+    url      = env("INVENTORY_DATABASE_URL")
 }
 
-// ------------------------------------------------------------
-// INVENTORY
-// Tồn kho hiện tại theo từng variant
-// productVariantId: [REF: db_products → Product Service]
-// ------------------------------------------------------------
 model Inventory {
-    id               String   @id @default(uuid()) @db.Char(36)
-    productVariantId String   @unique @map("product_variant_id") @db.Char(36)
-    quantity         Int      @default(0)
-    reservedQuantity Int      @default(0) @map("reserved_quantity")
-    updatedAt        DateTime @updatedAt @map("updated_at")
+    productVariantId String                 @id
+    quantity         Int                    @default(0)
+    reservedQuantity Int                    @default(0)
+    location         String?                @default("MAIN_WAREHOUSE")
+    createdAt        DateTime               @default(now())
+    updatedAt        DateTime               @updatedAt
+    transactions     InventoryTransaction[]
 
-    transactions InventoryTransaction[]
-
-    @@map("INVENTORY")
+    @@map("inventory")
 }
 
-// ------------------------------------------------------------
-// INVENTORY_TRANSACTIONS
-// Lịch sử mọi thay đổi tồn kho (nhập / xuất / điều chỉnh)
-// productVariantId: [REF: db_products → Product Service]
-// createdBy:        [REF: db_users   → User Service]
-// ------------------------------------------------------------
 model InventoryTransaction {
-    id               String           @id @default(uuid()) @db.Char(36)
-    productVariantId String           @map("product_variant_id") @db.Char(36)
-    type             InventoryTxnType
-    quantityChange   Int              @map("quantity_change")
-    quantityBefore   Int              @map("quantity_before")
-    quantityAfter    Int              @map("quantity_after")
-    referenceId      String?          @map("reference_id") @db.Char(36)
-    note             String?          @map("note") @db.VarChar(500)
-    createdBy        String           @map("created_by") @db.Char(36)
-    createdAt        DateTime         @default(now()) @map("created_at")
+    id               String          @id @default(uuid())
+    productVariantId String
+    type             TransactionType
+    quantityChange   Int
+    quantityBefore   Int
+    quantityAfter    Int
+    referenceId      String?
+    referenceType    ReferenceType
+    note             String?         @db.Text
+    createdBy        String
+    createdAt        DateTime        @default(now())
 
-    inventory Inventory @relation(fields: [productVariantId], references: [productVariantId])
+    inventory Inventory @relation(fields: [productVariantId], references: [productVariantId], onDelete: Cascade)
 
-    @@index([productVariantId, createdAt])
-    @@index([type])
-    @@map("INVENTORY_TRANSACTIONS")
+    @@index([productVariantId])
+    @@index([referenceId])
+    @@map("inventory_transactions")
 }
 
-enum InventoryTxnType {
-    import
-    export_sale
-    export_return
-    adjustment
+enum TransactionType {
+    IN
+    OUT
+    RESERVE
+    RELEASE
+    COMMIT
+    ADJUST
+}
+
+enum ReferenceType {
+    ORDER
+    RESTOCK
+    MANUAL
+    RETURN
 }

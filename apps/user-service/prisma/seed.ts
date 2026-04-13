@@ -1,4 +1,18 @@
+import { config as loadEnv } from 'dotenv';
+import { existsSync } from 'fs';
+import { resolve } from 'path';
 import { PrismaClient } from '@prisma/user-client';
+
+const rootEnvPath = [
+  resolve(process.cwd(), '.env'),
+  resolve(process.cwd(), '../../.env'),
+  resolve(__dirname, '../../../.env'),
+  resolve(__dirname, '../../../../.env'),
+].find((path) => existsSync(path));
+
+if (rootEnvPath) {
+  loadEnv({ path: rootEnvPath });
+}
 
 const prisma = new PrismaClient();
 

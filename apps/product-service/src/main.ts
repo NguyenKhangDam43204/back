@@ -1,14 +1,21 @@
 // apps/product-service/src/main.ts
-import * as dotenv from 'dotenv';
-import * as path from 'path';
-
-// PHẢI NẠP ENV TRƯỚC KHI IMPORT APP MODULE
-// Điều này giúp process.env có giá trị ngay khi NestJS khởi tạo các Provider (như Prisma)
-dotenv.config({ path: path.join(process.cwd(), '.env') });
-
 import { NestFactory } from '@nestjs/core';
 import { ProductServiceModule } from './product-service.module';
 import { Logger, ValidationPipe } from '@nestjs/common';
+import { existsSync } from 'fs';
+import { config as loadEnv } from 'dotenv';
+import { resolve } from 'path';
+
+const rootEnvPath = [
+  resolve(process.cwd(), '.env'),
+  resolve(process.cwd(), '../../.env'),
+  resolve(__dirname, '../../../.env'),
+  resolve(__dirname, '../../../../.env'),
+].find((path) => existsSync(path));
+
+if (rootEnvPath) {
+  loadEnv({ path: rootEnvPath });
+}
 
 async function bootstrap() {
   const logger = new Logger('Main');
@@ -30,19 +37,10 @@ async function bootstrap() {
     }),
   );
 
-  const port = process.env.PORT || 3000;
+  const port = process.env.PRODUCT_SERVICE_PORT ?? process.env.PORT ?? 3004;
   await app.listen(port);
 
   logger.log(`🚀 Product Service is running on http://localhost:${port}`);
-
-  // Kiểm tra biến môi trường
-  if (process.env.DATABASE_URL) {
-    logger.log('✅ DATABASE_URL: Loaded');
-  } else {
-    logger.warn(
-      '⚠️  DATABASE_URL: Missing (Using hardcoded value if available)',
-    );
-  }
 }
 
 bootstrap().catch((err) => {

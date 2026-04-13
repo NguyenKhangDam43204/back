@@ -56,8 +56,18 @@ export class AppController {
     return this.userClient.send({ cmd: 'auth.login' }, body);
   }
 
+  @Post('v1/auth/login')
+  loginUserV1(@Body() body: any) {
+    return this.userClient.send({ cmd: 'auth.login' }, body);
+  }
+
   @Post('user/register')
   registerUser(@Body() body: any) {
+    return this.userClient.send({ cmd: 'auth.register' }, body);
+  }
+
+  @Post('v1/auth/register')
+  registerUserV1(@Body() body: any) {
     return this.userClient.send({ cmd: 'auth.register' }, body);
   }
 
@@ -66,13 +76,28 @@ export class AppController {
     return this.userClient.send({ cmd: 'auth.verify-register' }, body);
   }
 
+  @Post('v1/auth/verify-register')
+  verifyRegisterV1(@Body() body: any) {
+    return this.userClient.send({ cmd: 'auth.verify-register' }, body);
+  }
+
   @Post('user/forgot-password')
   forgotPassword(@Body() body: any) {
     return this.userClient.send({ cmd: 'auth.forgot-password' }, body);
   }
 
+  @Post('v1/auth/forgot-password')
+  forgotPasswordV1(@Body() body: any) {
+    return this.userClient.send({ cmd: 'auth.forgot-password' }, body);
+  }
+
   @Post('user/reset-password')
   resetPassword(@Body() body: any) {
+    return this.userClient.send({ cmd: 'auth.reset-password' }, body);
+  }
+
+  @Post('v1/auth/reset-password')
+  resetPasswordV1(@Body() body: any) {
     return this.userClient.send({ cmd: 'auth.reset-password' }, body);
   }
 
