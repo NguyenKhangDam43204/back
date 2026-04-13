@@ -1,23 +1,51 @@
+// apps/product-service/src/main.ts
+import * as dotenv from 'dotenv';
+import * as path from 'path';
+
+// PHẢI NẠP ENV TRƯỚC KHI IMPORT APP MODULE
+// Điều này giúp process.env có giá trị ngay khi NestJS khởi tạo các Provider (như Prisma)
+dotenv.config({ path: path.join(process.cwd(), '.env') });
+
 import { NestFactory } from '@nestjs/core';
-import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { ProductServiceModule } from './product-service.module';
+import { Logger, ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
-  const app = await NestFactory.createMicroservice<MicroserviceOptions>(
-    ProductServiceModule,
-    {
-      transport: Transport.RMQ,
-      options: {
-        urls: ['amqp://tmdt:tmdt2026@rabbitmq:5672'],
-        queue: 'product_queue',
-        queueOptions: {
-          durable: false,
-        },
-      },
-    },
+  const logger = new Logger('Main');
+
+  const app = await NestFactory.create(ProductServiceModule);
+
+  // 1. Cấu hình Cors để Frontend (HTML file) có thể gọi API
+  app.enableCors();
+
+  // 2. Cấu hình Global Prefix
+  app.setGlobalPrefix('api');
+
+  // 3. Cấu hình Validation (Để các DTO @Min, @IsString hoạt động)
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+      forbidNonWhitelisted: false, // Cho phép các trường không có trong DTO (như id, createdAt) mà không bị lỗi
+    }),
   );
 
-  await app.listen();
-  console.log('Product Microservice is listening via RabbitMQ...');
+  const port = process.env.PORT || 3000;
+  await app.listen(port);
+
+  logger.log(`🚀 Product Service is running on http://localhost:${port}`);
+
+  // Kiểm tra biến môi trường
+  if (process.env.DATABASE_URL) {
+    logger.log('✅ DATABASE_URL: Loaded');
+  } else {
+    logger.warn(
+      '⚠️  DATABASE_URL: Missing (Using hardcoded value if available)',
+    );
+  }
 }
-void bootstrap();
+
+bootstrap().catch((err) => {
+  console.error('❌ Failed to start application:', err);
+  process.exit(1);
+});
