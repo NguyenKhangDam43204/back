@@ -1,10 +1,11 @@
-// apps/product-service/src/main.ts
 import { NestFactory } from '@nestjs/core';
 import { ProductServiceModule } from './product-service.module';
 import { Logger, ValidationPipe } from '@nestjs/common';
+import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { existsSync } from 'fs';
 import { config as loadEnv } from 'dotenv';
 import { resolve } from 'path';
+import helmet from 'helmet';
 
 const rootEnvPath = [
   resolve(process.cwd(), '.env'),
@@ -18,32 +19,59 @@ if (rootEnvPath) {
 }
 
 async function bootstrap() {
-  const logger = new Logger('Main');
+  const logger = new Logger('ProductService');
+
+  const rabbitmqUrl = process.env.RABBITMQ_URL ?? 'amqp://tmdt:tmdt2026@rabbitmq:5672';
+  const productQueue = process.env.PRODUCT_QUEUE ?? 'product_queue';
+  const port = process.env.PRODUCT_SERVICE_PORT ?? process.env.PORT ?? 3004;
 
   const app = await NestFactory.create(ProductServiceModule);
 
-  // 1. Cấu hình Cors để Frontend (HTML file) có thể gọi API
-  app.enableCors();
+  // RabbitMQ microservice transport
+  app.connectMicroservice<MicroserviceOptions>({
+    transport: Transport.RMQ,
+    options: {
+      urls: [rabbitmqUrl],
+      queue: productQueue,
+      queueOptions: { durable: true },
+      prefetchCount: Number(process.env.PRODUCT_RABBITMQ_PREFETCH ?? 10),
+      persistent: true,
+    },
+  });
 
-  // 2. Cấu hình Global Prefix
-  app.setGlobalPrefix('api');
+  // Security headers
+  app.use(helmet());
 
-  // 3. Cấu hình Validation (Để các DTO @Min, @IsString hoạt động)
+  // CORS
+  app.enableCors({
+    origin: process.env.CORS_ORIGIN ?? '*',
+    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'PUT'],
+    credentials: true,
+  });
+
+  // Global prefix
+  app.setGlobalPrefix('api/v1');
+
+  // Global validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
       transform: true,
-      forbidNonWhitelisted: false, // Cho phép các trường không có trong DTO (như id, createdAt) mà không bị lỗi
+      forbidNonWhitelisted: false,
     }),
   );
 
-  const port = process.env.PRODUCT_SERVICE_PORT ?? process.env.PORT ?? 3004;
+  await app.startAllMicroservices();
   await app.listen(port);
 
-  logger.log(`🚀 Product Service is running on http://localhost:${port}`);
+  logger.log(`========================================`);
+  logger.log(`✅ Product Service running`);
+  logger.log(`   HTTP  : http://localhost:${port}`);
+  logger.log(`   Queue : ${productQueue}`);
+  logger.log(`========================================`);
 }
 
 bootstrap().catch((err) => {
-  console.error('❌ Failed to start application:', err);
+  console.error('❌ Failed to start Product Service:', err);
   process.exit(1);
 });

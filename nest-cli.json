@@ -82,7 +82,15 @@
       "entryFile": "main",
       "sourceRoot": "apps/config-service/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/config-service/tsconfig.app.json"
+        "tsConfigPath": "apps/config-service/tsconfig.app.json",
+        "assets": [
+          {
+            "include": "prisma/**/*",
+            "outDir": "dist/apps/config-service"
+          }
+        ],
+        "webpack": true,
+        "webpackConfigPath": "apps/config-service/webpack.config.js"
       }
     },
     "notification-service": {
