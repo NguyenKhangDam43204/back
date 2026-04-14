@@ -72,6 +72,12 @@ npx prisma migrate deploy --schema=apps/product-service/prisma/schema.prisma
 npx prisma migrate deploy --schema=apps/config-service/prisma/schema.prisma
 ```
 
+Tạo dữ liệu
+
+```bash
+npm run seed:all
+```
+
 ### 4. Chạy toàn bộ hệ thống
 
 ```bash

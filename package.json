@@ -24,7 +24,12 @@
     "build:tmdt": "nest build tmdt",
     "build:inventory": "nest build inventory-service",
     "build:product-service": "nest build product-service",
-    "seed:user-service": "ts-node --project apps/user-service/tsconfig.app.json -r tsconfig-paths/register apps/user-service/prisma/seed.ts"
+    "seed:user-service": "ts-node --project apps/user-service/tsconfig.app.json -r tsconfig-paths/register apps/user-service/prisma/seed.ts",
+    "seed:product-service": "ts-node --project apps/product-service/tsconfig.app.json -r tsconfig-paths/register apps/product-service/prisma/seed.ts",
+    "seed:inventory-service": "ts-node --project apps/inventory-service/tsconfig.app.json -r tsconfig-paths/register apps/inventory-service/prisma/seed.ts",
+    "seed:review-service": "ts-node --project apps/review-service/tsconfig.app.json -r tsconfig-paths/register apps/review-service/prisma/seed.ts",
+    "seed:config-service": "ts-node --project apps/config-service/tsconfig.app.json -r tsconfig-paths/register apps/config-service/prisma/seed.ts",
+    "seed:all": "npm run seed:user-service && npm run seed:product-service && npm run seed:inventory-service && npm run seed:review-service && npm run seed:config-service"
   },
   "dependencies": {
     "@nestjs/axios": "^4.0.1",
