@@ -1,8 +1,15 @@
 {
   "compilerOptions": {
+    // ✅ Fix: thêm ignoreDeprecations để tắt warning về moduleResolution & baseUrl
+    // (tương thích TypeScript 5.x, cần thiết cho NestJS + CommonJS monorepo)
+    "ignoreDeprecations": "5.0",
+
     "module": "CommonJS",
+
+    // ✅ Giữ "node" để tương thích NestJS/CommonJS — chỉ cần tắt warning ở trên
     "moduleResolution": "node",
     "resolvePackageJsonExports": false,
+
     "esModuleInterop": true,
     "isolatedModules": true,
     "declaration": true,
@@ -21,6 +28,8 @@
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
     "forceConsistentCasingInFileNames": false,
+
+    
     "baseUrl": ".",
     "paths": {
       "@user-service/*": ["./apps/user-service/src/*"],
@@ -33,6 +42,8 @@
   "exclude": [
     "node_modules",
     "dist",
+    // ✅ Giữ exclude prisma.config.ts vì file dùng CommonJS __dirname
+    // và không cần compile vào build chính
     "**/prisma.config.ts"
   ]
 }

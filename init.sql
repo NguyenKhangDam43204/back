@@ -13,7 +13,7 @@ GRANT ALL PRIVILEGES ON db_reviews.*   TO 'root'@'%';
 GRANT ALL PRIVILEGES ON db_inventory.* TO 'root'@'%';
 GRANT ALL PRIVILEGES ON db_products.*  TO 'root'@'%';
 GRANT ALL PRIVILEGES ON db_config.*    TO 'root'@'%';
--- GRANT ALL PRIVILEGES ON db_carts.*      TO 'root'@'%';
+GRANT ALL PRIVILEGES ON db_carts.*      TO 'root'@'%';
 GRANT ALL PRIVILEGES ON db_promotions.* TO 'root'@'%';
 
 FLUSH PRIVILEGES;

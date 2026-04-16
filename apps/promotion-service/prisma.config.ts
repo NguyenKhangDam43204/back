@@ -1,4 +1,6 @@
 // apps/promotion-service/prisma.config.ts
+//
+
 import { config as loadEnv } from 'dotenv';
 import { existsSync } from 'fs';
 import { resolve } from 'path';
@@ -12,16 +14,8 @@ const rootEnvPath = [
 
 if (rootEnvPath) {
   loadEnv({ path: rootEnvPath });
+  console.log(`[prisma.config] Loaded env from: ${rootEnvPath}`);
 }
 
-import { defineConfig, env } from "prisma/config";
-
-export default defineConfig({
-  schema: "./prisma/schema.prisma",
-  migrations: {
-    path: "./prisma/migrations",
-  },
-  datasource: {
-    url: env("PROMOTION_DATABASE_URL"),   // ← Quan trọng: dùng PROMOTION_DATABASE_URL
-  },
-});
+// Prisma v5 không hỗ trợ defineConfig — không cần export gì thêm.
+// Prisma CLI sẽ tự đọc PROMOTION_DATABASE_URL từ process.env đã load ở trên.
