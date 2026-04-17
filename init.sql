@@ -5,7 +5,7 @@ CREATE DATABASE IF NOT EXISTS db_inventory CHARACTER SET utf8mb4 COLLATE utf8mb4
 CREATE DATABASE IF NOT EXISTS db_products  CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE DATABASE IF NOT EXISTS db_config    CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE DATABASE IF NOT EXISTS db_carts      CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE DATABASE IF NOT EXISTS db_promotions CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS db_promos CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- Grant quyền cho root
 GRANT ALL PRIVILEGES ON db_users.*     TO 'root'@'%';
@@ -14,6 +14,6 @@ GRANT ALL PRIVILEGES ON db_inventory.* TO 'root'@'%';
 GRANT ALL PRIVILEGES ON db_products.*  TO 'root'@'%';
 GRANT ALL PRIVILEGES ON db_config.*    TO 'root'@'%';
 GRANT ALL PRIVILEGES ON db_carts.*      TO 'root'@'%';
-GRANT ALL PRIVILEGES ON db_promotions.* TO 'root'@'%';
+GRANT ALL PRIVILEGES ON db_promos.* TO 'root'@'%';
 
 FLUSH PRIVILEGES;
